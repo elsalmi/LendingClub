@@ -1,0 +1,9 @@
+theme: jekyll-theme-primer
+title: Lending Club Project - Homepage
+description:
+baseurl:
+markdown: kramdown
+kramdown:
+    math_engine: mathjax
+    input: GFM
+    syntax_highlighter: rouge
