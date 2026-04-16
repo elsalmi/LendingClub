@@ -1,75 +1,129 @@
 ---
-title: Lending Club Project Overview
+title: LendingClub - Loan Outcome Prediction with Fairness Auditing
 ---
 
-## <img style="float: left; padding-right: 10px; width: 45px" src="https://raw.githubusercontent.com/Harvard-IACS/2018-CS109A/master/content/styles/iacs.png"> CS109A Introduction to Data Science
+# LendingClub - Loan Outcome Prediction with Fairness Auditing
 
-## <img style="float: right; padding-right: 10px; width: 150px" src="https://i.imgur.com/2ptDvXd.png">
+## TL;DR
 
-**Harvard University**<br/>
-**CSCI E-109A**<br/>
-**Fall 2018**<br/>
+This project predicts whether an approved LendingClub loan is likely to be
+**Fully Paid** or **Charged Off**, then audits whether model outcomes differ
+across ZIP-derived demographic proxy groups.
 
-**Group #47 Team Members**:<br/> 
-Victor Chen<br/>
-Danielle Crumley<br/>
-Mohamed Elsalmi<br/>
-Hoon Kang<br/>
+The strongest portfolio signal is not only the classifier. It is the full
+workflow: data cleaning, feature selection, model comparison, fairness metrics,
+and reweighing-based mitigation using AIF360.
 
-<hr style="height:1.5pt">
+## What is in this repo
 
+| Artifact | Purpose |
+| --- | --- |
+| [Data-Cleaning.md](Data-Cleaning.md) | Data loading, filtering, feature preparation, and missing-value treatment |
+| [EDA.md](EDA.md) | Exploratory analysis for LendingClub loan data |
+| [Models.md](Models.md) | Baseline and random forest model experiments |
+| [Fairness.md](Fairness.md) | Bias detection and mitigation notebook export with reported metrics |
+| [Discussion.md](Discussion.md) | Results framing, investor objective, and fairness discussion |
+| [MODEL_CARD.md](MODEL_CARD.md) | Portfolio-oriented model card and intended-use boundaries |
+| [docs/DATA.md](docs/DATA.md) | Data source, access, and privacy notes |
+| [reports/FAIRNESS_REPORT.md](reports/FAIRNESS_REPORT.md) | Short fairness report with metric snapshot |
 
-## <font color='maroon'>Background Information</font>
+## Problem
 
-The Lending Club is a peer-to-peer lending network for loans ranging from `$1,000` to `$40,000`. The Lending Club provides a large amount of loan data online so that its investors can make their own informed investment decisions. This online data dates from 2007 to Q2 2018 and provides certain borrower demographic and credit history information, as well as loan-specific information (including the purpose of the loan, the amount requested and amount funded, the interest rate, and the loan grade assigned by the Lending Club).
+Peer-to-peer loan investors care about default risk, but a model that only
+optimizes predictive performance can hide unequal behavior across borrower
+groups. This project frames the task as:
 
-## <font color='maroon'>Project Aim</font>
+1. Predict whether an approved loan will be fully paid or charged off.
+2. Prioritize high precision for loans predicted as fully paid.
+3. Audit whether predictions differ across demographic proxy groups.
+4. Document mitigation tradeoffs instead of presenting a single accuracy score.
 
-The main aim of this project is to develop a model that will predict whether a Lending Club-approved loan will end up being fully paid or charged off. These predictions, of course, would be very useful to investors in determining whether or not to invest. We aim to develop a model that is both 1) accurate/effective in producing a useful prediction for investors and 2) non-discriminatory with regard to demographic features such as race and home address.
+## Data
 
-We have chosen to include only completed loans in our model (i.e., none that are still in progress, whether current or in default, since we don’t know the final outcome of these loans).
+The original project used LendingClub funded-loan data from 2007 through Q3
+2018, excluding declined loans because those files had fewer useful fields and
+substantial missingness. The raw data is not committed to this repository.
 
+Important constraints:
 
-## <font color='maroon'>Data</font>
+- The project focuses on completed loans only: `Fully Paid` and `Charged Off`.
+- FICO scores were not available in the public dataset used here.
+- Sensitive race labels were not available, so the fairness audit used a ZIP3
+  proxy linked with Census-derived racial proportions.
+- The ZIP proxy is useful for auditing patterns, but it is not an individual
+  race label and should be treated as a noisy proxy.
 
+See [docs/DATA.md](docs/DATA.md) for data access and expected local layout.
 
-We used the aforementioned data that is available for download from the Lending Club website (https://www.lendingclub.com/).
+## Method
 
-Unfortunately, the Lending Club data for rejected loans is much more limited in scope: it includes only a few feature columns such as risk score, debt-to-income ratio, zip code, and length of employment. Since there is too much missing data, our final model will be built using only the data from the loans that were approved by the Lending Club.
+The original workflow is notebook-first and includes:
 
-First, we downloaded all of the available data on funded loans, which dates from 2007 to Q3 of 2018. It includes 145 columns and over 2 million rows.  We did not use the lending club’s data on rejected loans, since these datasets have much less information for each borrower/loan. 
+- Data filtering and cleaning from LendingClub CSV exports.
+- Feature preparation for tabular credit and loan attributes.
+- Baseline decision tree experiments.
+- Random forest modeling for the final investor-oriented ranking workflow.
+- AIF360 fairness metrics for protected-proxy group comparison.
+- Reweighing as a preprocessing mitigation strategy.
 
-Note that we were not able to incorporate borrower FICO scores into our model, since the Lending club restricts access to this information to its approved investors. However, there are many other credit risk-related features in the data, including many variables that come from the credit report such as the number of delinquencies in the borrower’s credit file in the past 2 years, the average current balance on all accounts, and the total credit revolving balance. Additionally, the lending club assigns its own loan grade (and loan subgrade) based on the FICO score and other variables, and we do have access to the Lending Club’s loan grades.
+## Reported metrics
 
-## <font color='maroon'>Methodology and Results</font>
-Our data explorataion, cleaning, processing, and modeling and fairness adjustment methodologies are discussed in detail on the relevant pages of the dataset which are linked at the top of this webpage. We summarize results and future considerations on the Discussions page.
+The following values are reported in [Fairness.md](Fairness.md). They are not
+newly recomputed by this README.
 
-## <font color='maroon'>Sources</font>
+| Result | Value |
+| --- | ---: |
+| Logistic regression classification accuracy | 0.652441 |
+| Statistical parity difference | -0.019635 |
+| Disparate impact | 0.966937 |
+| Equal opportunity difference | -0.013784 |
+| Average odds difference | -0.013502 |
+| Theil index | 0.354349 |
+| False negative rate difference | 0.013784 |
+| Training mean outcome difference before reweighing | -0.017565 |
+| Training mean outcome difference after reweighing | 0.000000 |
+| Test mean outcome difference before reweighing | -0.019698 |
+| Test mean outcome difference after reweighing | -0.002036 |
+| Random forest precision | 0.913286 |
+| Random forest test score | 0.506695 |
 
+The random forest result should be interpreted with care: the original
+discussion optimizes for high precision and ranked loan selection, not broad
+deployment as a fully calibrated automated lending system.
 
-**Kamiran, F. & Calders, T. Knowl Inf Syst (2012) 33: 1. https://doi.org/10.1007/s10115-011-0463-8**
+## Reproduce
 
-This paper provides a method that allows us to debias a dataset exhibiting unlawful discrimination. It shows how to feed a data into a model that does not exhibit this discrimination whilst optimizing accuracy. In this paper, we concentrate on the case with only one binary sensitive attribute and a two-class classification problem we study the theoretically optimal trade-off between accuracy and non-discrimination for pure classifiers. 
+The current repo is a rendered notebook archive. To reproduce the original work:
 
-**Bellamy, Rachel K.E., et al. AI Fairness 360: An Extensible Toolkit for Detecting, Understanding, and Mitigating Unwanted Algorithmic Bias. 3 Oct. 2018, doi:https://arxiv.org/abs/1810.01943.**
+1. Download the LendingClub funded-loan CSV exports locally.
+2. Place raw and intermediate files using the layout described in
+   [docs/DATA.md](docs/DATA.md).
+3. Run the notebooks in order from `notebooks/`:
+   `Data-Cleaning.ipynb`, `EDA.ipynb`, `Models.ipynb`, `Fairness.ipynb`.
 
-Fairness is an increasingly important concern as machine learning models are used to support decision making in high-stakes applications such as mortgage lending, hiring, and prison sentencing. This paper introduces a new open source Python toolkit for algorithmic fairness, AI Fairness 360 (AIF360), released under an Apache v2.0 license {this https URL). The main objectives of this toolkit are to help facilitate the transition of fairness research algorithms to use in an industrial setting and to provide a common framework for fairness researchers to share and evaluate algorithms. 
-The package includes a comprehensive set of fairness metrics for datasets and models, explanations for these metrics, and algorithms to mitigate bias in datasets and models. It also includes an interactive Web experience (this https URL) that provides a gentle introduction to the concepts and capabilities for line-of-business users, as well as extensive documentation, usage guidance, and industry-specific tutorials to enable data scientists and practitioners to incorporate the most appropriate tool for their problem into their work products. The architecture of the package has been engineered to conform to a standard paradigm used in data science, thereby further improving usability for practitioners. Such architectural design and abstractions enable researchers and developers to extend the toolkit with their new algorithms and improvements, and to use it for performance benchmarking. A built-in testing infrastructure maintains code quality.
+Next engineering step: extract the notebooks into idempotent scripts that write
+fresh report artifacts under `reports/`.
 
+## Responsible use
 
-**Emekter, Riza, et al. Evaluating Credit Risk and Loan Performance in Online Peer-to-Peer (P2P) Lending. Applied Economics, vol. 47, no. 1, 2014, pp. 5470., doi:10.1080/00036846.2014.962222.**
+This is an educational and portfolio project. It should not be used for real
+credit decisions without a full compliance, legal, governance, and validation
+process. The ZIP3 proxy can expose group-level disparities, but it can also
+misrepresent individuals.
 
-This paper sheds light on P2P lending, utilizing this paper we were able to better understand how websites such as The Lending Club works and what factors would be influential in the evaluation of credit risk. 
+## Project history
 
+This project began as Harvard CSCI E-109A group work by Victor Chen, Danielle
+Crumley, Mohamed Elsalmi, and Hoon Kang. The current documentation pass reframes
+the repo as a portfolio artifact and preserves the original notebook-derived
+pages for traceability.
 
-**ONeil, Cathy. Weapons of Math Destruction: How Big Data Increases Inequality and Threatens Democracy. Penguin Books, 2018.**
+## References
 
-O'Neil, a mathematician, analyses how the use of big data and algorithms in a variety of fields, including insurance, advertising, education, and policing, can lead to decisions that harm the poor, reinforce discrimination, and amplify inequality. This book has been especially helpful in informing us how modern-day credit score systems can be severely biased and discriminatory. Having a high-level of understanding of the topic assisted us in making several key decisions in designing our model and addressing fairness.  
-
-
-
-
-
-
-
-
+- Kamiran, F. and Calders, T. "Data preprocessing techniques for classification
+  without discrimination." Knowledge and Information Systems, 2012.
+- Bellamy, Rachel K.E., et al. "AI Fairness 360: An Extensible Toolkit for
+  Detecting, Understanding, and Mitigating Unwanted Algorithmic Bias." 2018.
+- Emekter, Riza, et al. "Evaluating Credit Risk and Loan Performance in Online
+  Peer-to-Peer Lending." Applied Economics, 2014.
+- O'Neil, Cathy. *Weapons of Math Destruction*. Penguin Books, 2018.
