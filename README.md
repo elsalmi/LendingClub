@@ -7,42 +7,42 @@ title: LendingClub - Loan Outcome Prediction with Fairness Auditing
 ## TL;DR
 
 This project predicts whether an approved LendingClub loan is likely to be
-**Fully Paid** or **Charged Off**, then audits whether model outcomes differ
-across ZIP-derived demographic proxy groups.
+`Fully Paid` or `Charged Off`, then audits whether model outcomes differ across
+ZIP-derived demographic proxy groups.
 
-The strongest portfolio signal is not only the classifier. It is the full
-workflow: data cleaning, feature selection, model comparison, fairness metrics,
-and reweighing-based mitigation using AIF360.
+The notebook export (`Fairness.md`) is still the source of truth. The model
+card and the short report under `reports/` summarize the evidence without
+copying the same story in three places.
 
 ## What is in this repo
 
 | Artifact | Purpose |
 | --- | --- |
-| [Data-Cleaning.md](Data-Cleaning.md) | Data loading, filtering, feature preparation, and missing-value treatment |
-| [EDA.md](EDA.md) | Exploratory analysis for LendingClub loan data |
-| [Models.md](Models.md) | Baseline and random forest model experiments |
-| [Fairness.md](Fairness.md) | Bias detection and mitigation notebook export with reported metrics |
-| [Discussion.md](Discussion.md) | Results framing, investor objective, and fairness discussion |
-| [MODEL_CARD.md](MODEL_CARD.md) | Portfolio-oriented model card and intended-use boundaries |
-| [docs/DATA.md](docs/DATA.md) | Data source, access, and privacy notes |
-| [reports/FAIRNESS_REPORT.md](reports/FAIRNESS_REPORT.md) | Short fairness report with metric snapshot |
+| [Data-Cleaning.md](Data-Cleaning.md) | Data loading, filtering, and feature preparation |
+| [EDA.md](EDA.md) | Exploratory analysis of the loan data |
+| [Models.md](Models.md) | Baseline and random forest experiments |
+| [Fairness.md](Fairness.md) | Notebook export with the fairness metrics and mitigation outputs |
+| [Discussion.md](Discussion.md) | Results framing and tradeoffs |
+| [MODEL_CARD.md](MODEL_CARD.md) | Intended use, limitations, and metric snapshot |
+| [docs/DATA.md](docs/DATA.md) | Data source, layout, and privacy notes |
+| [reports/FAIRNESS_REPORT.md](reports/FAIRNESS_REPORT.md) | Compact report generated from the committed evidence |
 
 ## Problem
 
 Peer-to-peer loan investors care about default risk, but a model that only
 optimizes predictive performance can hide unequal behavior across borrower
-groups. This project frames the task as:
+groups. This project keeps the task simple:
 
 1. Predict whether an approved loan will be fully paid or charged off.
 2. Prioritize high precision for loans predicted as fully paid.
 3. Audit whether predictions differ across demographic proxy groups.
-4. Document mitigation tradeoffs instead of presenting a single accuracy score.
+4. Document the fairness tradeoffs instead of presenting a single score.
 
 ## Data
 
 The original project used LendingClub funded-loan data from 2007 through Q3
-2018, excluding declined loans because those files had fewer useful fields and
-substantial missingness. The raw data is not committed to this repository.
+2018. Declined-loan records were excluded because they had fewer useful fields
+and substantial missingness. The raw data is not committed to this repository.
 
 Important constraints:
 
@@ -66,26 +66,18 @@ The original workflow is notebook-first and includes:
 - AIF360 fairness metrics for protected-proxy group comparison.
 - Reweighing as a preprocessing mitigation strategy.
 
-## Reported metrics
+## Evidence snapshot
 
-The following values are reported in [Fairness.md](Fairness.md). They are not
-newly recomputed by this README.
+The detailed values live in [MODEL_CARD.md](MODEL_CARD.md) and are regenerated
+into [reports/FAIRNESS_REPORT.md](reports/FAIRNESS_REPORT.md). The quickest
+read is:
 
 | Result | Value |
 | --- | ---: |
-| Logistic regression classification accuracy | 0.652441 |
-| Statistical parity difference | -0.019635 |
-| Disparate impact | 0.966937 |
-| Equal opportunity difference | -0.013784 |
-| Average odds difference | -0.013502 |
-| Theil index | 0.354349 |
-| False negative rate difference | 0.013784 |
-| Training mean outcome difference before reweighing | -0.017565 |
-| Training mean outcome difference after reweighing | 0.000000 |
-| Test mean outcome difference before reweighing | -0.019698 |
-| Test mean outcome difference after reweighing | -0.002036 |
+| Logistic regression accuracy | 0.652441 |
 | Random forest precision | 0.913286 |
-| Random forest test score | 0.506695 |
+| Reweighed training mean outcome difference | 0.000000 |
+| Reweighed test mean outcome difference | -0.002036 |
 
 The random forest result should be interpreted with care: the original
 discussion optimizes for high precision and ranked loan selection, not broad
@@ -100,9 +92,11 @@ The current repo is a rendered notebook archive. To reproduce the original work:
    [docs/DATA.md](docs/DATA.md).
 3. Run the notebooks in order from `notebooks/`:
    `Data-Cleaning.ipynb`, `EDA.ipynb`, `Models.ipynb`, `Fairness.ipynb`.
+4. Regenerate the short report with `python scripts/build_fairness_report.py`.
 
-Next engineering step: extract the notebooks into idempotent scripts that write
-fresh report artifacts under `reports/`.
+The report script regenerates `reports/FAIRNESS_REPORT.md` from the committed
+metric snapshot and keeps the notebook evidence visible without repeating the
+same story in multiple files.
 
 ## Responsible use
 
@@ -110,13 +104,6 @@ This is an educational and portfolio project. It should not be used for real
 credit decisions without a full compliance, legal, governance, and validation
 process. The ZIP3 proxy can expose group-level disparities, but it can also
 misrepresent individuals.
-
-## Project history
-
-This project began as Harvard CSCI E-109A group work by Victor Chen, Danielle
-Crumley, Mohamed Elsalmi, and Hoon Kang. The current documentation pass reframes
-the repo as a portfolio artifact and preserves the original notebook-derived
-pages for traceability.
 
 ## References
 

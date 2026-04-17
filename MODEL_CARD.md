@@ -70,9 +70,13 @@ Reported mean-outcome differences:
 - Metrics reflect the notebook state captured in the repo and should be
   regenerated before any future publication claims.
 
+## Regeneration
+
+Run `python scripts/build_fairness_report.py` to re-emit the short report under
+`reports/FAIRNESS_REPORT.md` from the committed metric snapshot.
+
 ## Next validation work
 
 1. Convert the notebooks into scriptable pipeline steps.
 2. Regenerate metrics from a pinned environment.
 3. Add calibration and threshold-sweep analysis.
-4. Add a compact report generator that writes `reports/FAIRNESS_REPORT.md`.
